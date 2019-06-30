@@ -23,11 +23,12 @@
 # then run the script!
 
 # CONFIGURATION OPTIONS
-UNIFI_DOWNLOAD_URL=http://dl.ubnt.com/unifi/$1/UniFi.unix.zip
-UNIFI_BIN_INSTALL=/opt/unfi_version
-UNIFI_ARCHIVE_FILENAME=$UNIFI_BIN_INSTALL/UniFi.$1-unix.zip
+UNIFI_VERSION=$1
+UNIFI_DOWNLOAD_URL=http://dl.ubnt.com/unifi/${UNIFI_VERSION}/UniFi.unix.zip
+UNIFI_BIN_INSTALL=/opt/unifi_version
+UNIFI_ARCHIVE_FILENAME=${UNIFI_BIN_INSTALL}/UniFi.${UNIFI_VERSION}-unix.zip
 UNIFI_OWNER=unifi
-UNIFI_SERVICE=unifi.service
+UNIFI_SERVICE=unifi
 UNIFI_PARENT_DIR=/usr/lib
 UNIFI_DIR=/usr/lib/UniFi
 UNIFI_BACKUP_DIR=/opt/UniFi_bak
@@ -40,7 +41,7 @@ if [ ! -d "$UNIFI_BIN_INSTAL" ];then
 	mkdir $UNIFI_BIN_INSTAL
 fi
 
-# Jump into the backup directory
+
 if [ ! -d "$UNIFI_BACKUP_DIR" ]; then
        	mkdir $UNIFI_BACKUP_DIR
 fi
@@ -75,18 +76,14 @@ if [ -f "$UNIFI_ARCHIVE_FILENAME" ]; then
 	printf "\n"
 	service $UNIFI_SERVICE stop
 	
-	# Remove previous backup directory (if it exists)
-	#if [ -d "$UNIFI_BACKUP_DIR" ]; then
-#		printf "\nRemoving previous backup directory...\n"
-#		rm -rf $UNIFI_BACKUP_DIR
-#	fi
-	
 	# Move existing UniFi directory to backup location
 	printf "\nBackup existing UniFi Controller directory to backup location...\n"
-	if [ -f "$UNIFI_DIR" ];then
-        if [ -f "$UNIFI_BACKUP_DIR" ];then
-            tar -czvf $UNIFI_BACKUP_DIR/$UNIFI_BACKUP_FILE;tar.gz $UNIFI_DIR
-            mv $UNIFI_DIR $UNIFI_BACKUP_DIR
+	if [ -d "$UNIFI_DIR" ];then
+        if [ -d "$UNIFI_BACKUP_DIR" ];then
+            tar -czvf ${UNIFI_BACKUP_DIR}/${UNIFI_BACKUP_FILE}.tar.gz $UNIFI_DIR
+            printf "\nMoving folder to location...\n"
+            mv $UNIFI_DIR ${UNIFI_BACKUP_DIR}/ &
+            show_dots $!
         fi
 	fi
 
@@ -98,14 +95,13 @@ if [ -f "$UNIFI_ARCHIVE_FILENAME" ]; then
 	fi
 
 
-#
-#	# Create an archive of the existing data directory
+
 	if [ -d "$UNIFI_DIR" ]; then
 #        printf "\nBacking up existing UniFi Controller data..."
 #        tar zcf $TEMP_DIR/unifi_data_bak.tar.gz data/ &
         if [ -d "$UNIFI_BACKUP_DIR/UniFi/data" ]; then
             printf "\nExtracting UniFi Controller backup data to new directory..."
-            cp -rf $UNIFI_BACKUP_DIR/UniFi/data/* $UNIFI_DIR/data/
+            cp -rf $UNIFI_BACKUP_DIR/UniFi/data $UNIFI_DIR/ &
             show_dots $!
         fi
 	fi
@@ -113,7 +109,7 @@ if [ -f "$UNIFI_ARCHIVE_FILENAME" ]; then
 	
 	# Enforce proper ownership of UniFi directory
 	chown -R $UNIFI_OWNER:$UNIFI_OWNER $UNIFI_DIR
-	
+	rm -rf ${UNIFI_BACKUP_DIR}/UniFi
 	# Restart the local UniFi Controller service
 	printf "\n"
 	service $UNIFI_SERVICE start

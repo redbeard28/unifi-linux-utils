@@ -23,17 +23,27 @@
 # then run the script!
 
 # CONFIGURATION OPTIONS
-UNIFI_DOWNLOAD_URL=http://dl.ubnt.com/unifi/5.0.7/UniFi.unix.zip
-UNIFI_ARCHIVE_FILENAME=UniFi.unix.zip
-UNIFI_OWNER=ubnt
-UNIFI_SERVICE=unifi
-UNIFI_PARENT_DIR=/opt
-UNIFI_DIR=/opt/UniFi
+UNIFI_DOWNLOAD_URL=http://dl.ubnt.com/unifi/$1/UniFi.unix.zip
+UNIFI_BIN_INSTALL=/opt/unfi_version
+UNIFI_ARCHIVE_FILENAME=$UNIFI_BIN_INSTALL/UniFi.$1-unix.zip
+UNIFI_OWNER=unifi
+UNIFI_SERVICE=unifi.service
+UNIFI_PARENT_DIR=/usr/lib
+UNIFI_DIR=/usr/lib/UniFi
 UNIFI_BACKUP_DIR=/opt/UniFi_bak
+UNIFI_BACKUP_FILE=unifi_ctrl_$(date +%d-%m-$Y_%Hh%M)
 TEMP_DIR=/tmp
 
 #### SHOULDN'T HAVE TO MODIFY PAST THIS POINT ####
 
+if [ ! -d "$UNIFI_BIN_INSTAL" ];then
+	mkdir $UNIFI_BIN_INSTAL
+fi
+
+# Jump into the backup directory
+if [ ! -d "$UNIFI_BACKUP_DIR" ]; then
+       	mkdir $UNIFI_BACKUP_DIR
+fi
 # Create progress dots function
 show_dots() {
 	while ps $1 >/dev/null ; do
@@ -46,11 +56,14 @@ show_dots() {
 # Let's DO this!
 printf "Upgrading UniFi Controller...\n"
 
-# Retrieve the updated zip archive from UBNT (overwriting any previous version)
-printf "\nDownloading %s from UBNT..." "$UNIFI_DOWNLOAD_URL"
-cd $TEMP_DIR || exit
-wget -qq $UNIFI_DOWNLOAD_URL -O $UNIFI_ARCHIVE_FILENAME &
-show_dots $!
+if [ ! -f "${UNIFI_ARCHIVE_FILENAME}" ]; then
+
+    # Retrieve the updated zip archive from UBNT (overwriting any previous version)
+    printf "\nDownloading %s from UBNT..." "$UNIFI_DOWNLOAD_URL"
+    cd $TEMP_DIR || exit
+    wget -qq $UNIFI_DOWNLOAD_URL -O $UNIFI_ARCHIVE_FILENAME &
+    show_dots $!
+fi
 
 # Check to make sure we have a downloaded file to work with
 
@@ -63,32 +76,40 @@ if [ -f "$UNIFI_ARCHIVE_FILENAME" ]; then
 	service $UNIFI_SERVICE stop
 	
 	# Remove previous backup directory (if it exists)
-	if [ -d "$UNIFI_BACKUP_DIR" ]; then
-		printf "\nRemoving previous backup directory...\n"
-		rm -rf $UNIFI_BACKUP_DIR
-	fi
+	#if [ -d "$UNIFI_BACKUP_DIR" ]; then
+#		printf "\nRemoving previous backup directory...\n"
+#		rm -rf $UNIFI_BACKUP_DIR
+#	fi
 	
 	# Move existing UniFi directory to backup location
-	printf "\nMoving existing UniFi Controller directory to backup location...\n"
-	mv $UNIFI_DIR $UNIFI_BACKUP_DIR
-	
-	# Extract new version
-	printf "\nExtracting downloaded software..."
-	unzip -qq $TEMP_DIR/$UNIFI_ARCHIVE_FILENAME -d $UNIFI_PARENT_DIR &
-	show_dots $!
-	
-	# Jump into the backup directory
-	cd $UNIFI_BACKUP_DIR || exit
-	
-	# Create an archive of the existing data directory
-	printf "\nBacking up existing UniFi Controller data..."
-	tar zcf $TEMP_DIR/unifi_data_bak.tar.gz data/ &
-	show_dots $!
-	
-	# Extract the data into the new directory
-	printf "\nExtracting UniFi Controller backup data to new directory..."
-	tar zxf $TEMP_DIR/unifi_data_bak.tar.gz -C $UNIFI_DIR &
-	show_dots $!
+	printf "\nBackup existing UniFi Controller directory to backup location...\n"
+	if [ -f "$UNIFI_DIR" ];then
+        if [ -f "$UNIFI_BACKUP_DIR" ];then
+            tar -czvf $UNIFI_BACKUP_DIR/$UNIFI_BACKUP_FILE;tar.gz $UNIFI_DIR
+            mv $UNIFI_DIR $UNIFI_BACKUP_DIR
+        fi
+	fi
+
+	if [ -d "$UNIFI_PARENT_DIR" ];then
+	    # Extract new version
+	    printf "\nExtracting downloaded software..."
+	    unzip -qq $UNIFI_ARCHIVE_FILENAME -d $UNIFI_PARENT_DIR &
+	    show_dots $!
+	fi
+
+
+#
+#	# Create an archive of the existing data directory
+	if [ -d "$UNIFI_DIR" ]; then
+#        printf "\nBacking up existing UniFi Controller data..."
+#        tar zcf $TEMP_DIR/unifi_data_bak.tar.gz data/ &
+        if [ -d "$UNIFI_BACKUP_DIR/UniFi/data" ]; then
+            printf "\nExtracting UniFi Controller backup data to new directory..."
+            cp -rf $UNIFI_BACKUP_DIR/UniFi/data/* $UNIFI_DIR/data/
+            show_dots $!
+        fi
+	fi
+
 	
 	# Enforce proper ownership of UniFi directory
 	chown -R $UNIFI_OWNER:$UNIFI_OWNER $UNIFI_DIR

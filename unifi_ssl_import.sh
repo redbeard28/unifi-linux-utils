@@ -22,18 +22,18 @@
 # and be back online immediately.
 
 # CONFIGURATION OPTIONS
-UNIFI_HOSTNAME=hostname.example.com
+UNIFI_HOSTNAME=unifi.redbeard-consulting.fr
 UNIFI_SERVICE=unifi
 
 # Uncomment following three lines for Fedora/RedHat/CentOS
-UNIFI_DIR=/opt/UniFi
-JAVA_DIR=${UNIFI_DIR}
-KEYSTORE=${UNIFI_DIR}/data/keystore
+#UNIFI_DIR=/opt/UniFi
+#JAVA_DIR=${UNIFI_DIR}
+#KEYSTORE=${UNIFI_DIR}/data/keystore
 
 # Uncomment following three lines for Debian/Ubuntu
-#UNIFI_DIR=/var/lib/unifi
-#JAVA_DIR=/usr/lib/unifi
-#KEYSTORE=${UNIFI_DIR}/keystore
+UNIFI_DIR=/usr/lib/UniFi/lib
+JAVA_DIR=/usr/lib/UniFi
+KEYSTORE=${UNIFI_DIR}/keystore
 
 # Uncomment following three lines for CloudKey
 #UNIFI_DIR=/var/lib/unifi
@@ -46,9 +46,9 @@ LE_MODE=no
 LE_LIVE_DIR=/etc/letsencrypt/live
 
 # THE FOLLOWING OPTIONS NOT REQUIRED IF LE_MODE IS ENABLED
-PRIV_KEY=/etc/ssl/private/hostname.example.com.key
-SIGNED_CRT=/etc/ssl/certs/hostname.example.com.crt
-CHAIN_FILE=/etc/ssl/certs/startssl-chain.crt
+PRIV_KEY=/etc/letsencrypt/live/redbeard-consulting.fr-0002/privkey.pem
+SIGNED_CRT=/etc/letsencrypt/live/redbeard-consulting.fr-0002/cert.pem
+CHAIN_FILE=/etc/letsencrypt/live/redbeard-consulting.fr-0002/chain.pem
 
 # CONFIGURATION OPTIONS YOU PROBABLY SHOULDN'T CHANGE
 ALIAS=unifi
